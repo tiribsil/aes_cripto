@@ -21,14 +21,23 @@ unsigned char s_box[256] = {
            0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 };
 
-unsigned char rcon[11] = {
-    0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
+unsigned char mix_matrix[4][4] = {
+    {0x02, 0x03, 0x01, 0x01},
+    {0x01, 0x02, 0x03, 0x01},
+    {0x01, 0x01, 0x02, 0x03},
+    {0x03, 0x01, 0x01, 0x02}
 };
+
+unsigned char rcon[11] = {
+        0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
+};
+
+  
 
 void add_round_key(char* round_key, char* message){
     // xor da mensagem com cada byte da chave expandida
     for(int i = 0; i < KEY_SIZE; i++)
-        message[i] ^= round_key[i]
+        message[i] ^= round_key[i];
 }
 
 void sub_bytes(void* p, size_t size){
@@ -36,6 +45,42 @@ void sub_bytes(void* p, size_t size){
     char* bytes = (char*)p;
     for(size_t i = 0; i < size; i++)
         bytes[i] = s_box[(unsigned)bytes[i]];
+}
+
+void shift_rows(char* message){
+
+}
+
+char g_product(char a, char b){
+    // produto no corpo de galois 2^8
+    char result = 0;
+
+    for(int i = 0; i < 8; i++){
+        if(b & 1) result ^= a;
+
+        char overflow = a & 0x80;
+        a <<= 1;
+
+        if(overflow) a ^= 0x1B; // polinômio primo em 2^8
+        b >>= 1;
+    }
+
+    return result;
+}
+
+void mix_columns(char* message, unsigned char matrix[MATRIX_ORDER][MATRIX_ORDER]){
+    // operações são em corpo de galois, então soma vira xor e
+    // produto precisa de uma função separada
+    for(char* column = message; column - message < KEY_SIZE; column += MATRIX_ORDER){
+        char new_column[MATRIX_ORDER] = {0};
+
+        for(int i = 0; i < MATRIX_ORDER; i++){
+            for(int j = 0; j < MATRIX_ORDER; j++) 
+                new_column[i] ^= g_product(matrix[i][j], column[j]);
+        }
+
+        memcpy(column, new_column, MATRIX_ORDER);
+    }
 }
 
 word key_schedule_core(word previous_word, int room_i){
@@ -76,15 +121,16 @@ void encrypt(char* key, char* message){
     
     add_round_key(expanded_key, message);
 
-    // loop i = 1; i < 10
-    //     sub bytes
-    //     shift linhas
-    //     mix colunas
-    //     add round key i
+    for(int i = 1; i < 10; i++){
+        sub_bytes(message, KEY_SIZE);
+        shift_rows(message);
+        mix_columns(message, mix_matrix);
+        add_round_key(expanded_key + (i << 4), message);
+    }
 
-    // sub bytes
-    // shift linhas
-    // add round key 10
+    sub_bytes(message, KEY_SIZE);
+    shift_rows(message);
+    add_round_key(expanded_key + (10 << 4), message);
 }
 
 
