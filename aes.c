@@ -26,6 +26,7 @@ unsigned char rcon[11] = {
 };
 
 void sub_bytes(void* p, size_t size){
+    // substitui size bytes a partir de p com base na s_box
     char* bytes = (char*)p;
     for(size_t i = 0; i < size; i++)
         bytes[i] = s_box[(unsigned)bytes[i]];
@@ -39,7 +40,7 @@ word key_schedule_core(word previous_word, int room_i){
     // como o shift é em byte, tem que fazer << 3
     word first_byte = previous_word >> (3 << 3);
     word new_word = previous_word << (1 << 3);
-    new_word &= first_byte;
+    new_word |= first_byte;
 
     // substitui com a s-box
     sub_bytes(&new_word, sizeof(new_word));
@@ -66,7 +67,18 @@ char* key_schedule(char* key){
 
 void encrypt(char* key, char* message){
     char* expanded_key = key_schedule(key);
+    
+    // add round key 0
 
+    // loop i = 1; i < 10
+    //     sub bytes
+    //     shift linhas
+    //     mix colunas
+    //     add round key i
+
+    // sub bytes
+    // shift linhas
+    // add round key 10
 }
 
 
