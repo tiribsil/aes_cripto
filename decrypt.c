@@ -15,7 +15,7 @@ int main(int argc, char *argv[]){
     printf("Decrypted message:\n");
 
     printf("String: %s\nHex: ", message);
-    for(int i = 0; *(message + i); i++) printf("%02x", *(unsigned*)(message + i));
+    for(int i = 0; *(message + i); i++) printf("%02x", (unsigned char)*(message + i));
     printf("\n");
 
     return 0;
