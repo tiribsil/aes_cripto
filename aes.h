@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define KEY_SIZE 16
+
 typedef uint32_t word;
 
 void encrypt(char* key, char* message);

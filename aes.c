@@ -25,6 +25,12 @@ unsigned char rcon[11] = {
     0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
 };
 
+void add_round_key(char* round_key, char* message){
+    // xor da mensagem com cada byte da chave expandida
+    for(int i = 0; i < KEY_SIZE; i++)
+        message[i] ^= round_key[i]
+}
+
 void sub_bytes(void* p, size_t size){
     // substitui size bytes a partir de p com base na s_box
     char* bytes = (char*)p;
@@ -68,7 +74,7 @@ char* key_schedule(char* key){
 void encrypt(char* key, char* message){
     char* expanded_key = key_schedule(key);
     
-    // add round key 0
+    add_round_key(expanded_key, message);
 
     // loop i = 1; i < 10
     //     sub bytes
