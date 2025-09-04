@@ -75,7 +75,19 @@ void sub_bytes(void* p, size_t size, unsigned char map[256]){
         bytes[i] = map[(unsigned)bytes[i]];
 }
 
-void shift_rows(char* message){
+void shift_rows(char* message) {
+
+    for (int i = 0; i < 4; i++) {
+        char temp = message[i + 4];
+        for (int j = 0, idx = i; j < 4; j++, idx = idx - 4){
+            if (idx < 0) {idx = idx + 16;}
+            if (idx + 4 > 15) {message[(idx + 4) % 4] = message[idx]; continue;}
+            if (j == 3) {message[idx + 4] = temp; continue;}
+            message[idx + 4] = message[idx];
+
+        }
+
+    }
 
 }
 
@@ -146,22 +158,6 @@ char* key_schedule(char* key){
         words[i] = words[i - 4] ^ key_schedule_core(words[i - 1], i);
     
     return (char*)words;
-}
-
-void shift_rows(char* message) {
-
-    for (int i = 0; i < 4; i++) {
-        char temp = message[i + 4];
-        for (int j = 0, idx = i; j < 4; j++, idx = idx - 4){
-            if (idx < 0) {idx = idx + 16;}
-            if (idx + 4 > 15) {message[(idx + 4) % 4] = message[idx]; continue;}
-            if (j == 3) {message[idx + 4] = temp; continue;}
-            message[idx + 4] = message[idx];
-
-        }
-
-    }
-
 }
 
 void encrypt(char* key, char* message){
