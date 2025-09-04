@@ -2,6 +2,8 @@
 #include <string.h>
 #include "aes.h"
 
+#include <stdio.h>
+
 unsigned char s_box[256] = {
    0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
            0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -70,9 +72,9 @@ void add_round_key(char* round_key, char* message){
 
 void sub_bytes(void* p, size_t size, unsigned char map[256]){
     // substitui size bytes a partir de p com base no mapa
-    char* bytes = (char*)p;
+    unsigned char* bytes = (unsigned char*)p;
     for(size_t i = 0; i < size; i++)
-        bytes[i] = map[(unsigned)bytes[i]];
+        bytes[i] = map[bytes[i]];
 }
 
 void shift_rows(char* message) {
@@ -161,8 +163,9 @@ char* key_schedule(char* key){
 }
 
 void encrypt(char* key, char* message){
-    char* expanded_key = key_schedule(key);
     
+    char* expanded_key = key_schedule(key);
+        
     add_round_key(expanded_key, message);
 
     for(int i = 1; i < 10; i++){
