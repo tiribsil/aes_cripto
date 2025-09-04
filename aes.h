@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define MATRIX_ORDER 4
+#define KEY_SIZE 16
+
 typedef uint32_t word;
 
 void encrypt(char* key, char* message);
