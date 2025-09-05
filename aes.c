@@ -62,9 +62,17 @@ unsigned char rcon[11] = {
         0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
 };
 
-  
+void print_as_hex(const char* label, char* data, int size) {
+    printf("%s: [", label);
+    for(int i = 0; i < size; i++)
+        printf("%02x", (unsigned char)data[i]);
+    
+    printf("]\n");
+}
 
 void add_round_key(char* round_key, char* message){
+    print_as_hex("Round key        ", round_key, KEY_SIZE);
+
     // xor da mensagem com cada byte da chave expandida
     for(int i = 0; i < KEY_SIZE; i++)
         message[i] ^= round_key[i];
@@ -78,23 +86,49 @@ void sub_bytes(void* p, size_t size, unsigned char map[256]){
 }
 
 void shift_rows(char* message) {
+    char temp = message[1];
+    message[1] = message[5];
+    message[5] = message[9];
+    message[9] = message[13];
+    message[13] = temp;
 
-    for (int i = 0; i < 4; i++) {
-        char temp = message[i + 4];
-        for (int j = 0, idx = i; j < 4; j++, idx = idx - 4){
-            if (idx < 0) {idx = idx + 16;}
-            if (idx + 4 > 15) {message[(idx + 4) % 4] = message[idx]; continue;}
-            if (j == 3) {message[idx + 4] = temp; continue;}
-            message[idx + 4] = message[idx];
+    char temp0 = message[2];
+    char temp1 = message[6];
+    message[2] = message[10];
+    message[6] = message[14];
+    message[10] = temp0;
+    message[14] = temp1;
 
-        }
-
-    }
-
+    temp0 = message[3];
+    temp1 = message[7];
+    char temp2 = message[11];
+    message[3] = message[15];
+    message[7] = temp0;
+    message[11] = temp1;
+    message[15] = temp2;
 }
 
 void inv_shift_rows(char* message){
+    char temp = message[13];
+    message[13] = message[9];
+    message[9] = message[5];
+    message[5] = message[1];
+    message[1] = temp;
 
+    char temp0 = message[14];
+    char temp1 = message[10];
+    message[14] = message[6];
+    message[10] = message[2];
+    message[6] = temp0;
+    message[2] = temp1;
+
+    temp0 = message[15];
+    temp1 = message[11];
+    char temp2 = message[7];
+    message[15] = message[3];
+    message[11] = temp0;
+    message[7] = temp1;
+    message[3] = temp2;
 }
 
 char g_product(char a, char b){
@@ -166,18 +200,29 @@ void encrypt(char* key, char* message){
     
     char* expanded_key = key_schedule(key);
         
+    print_as_hex("Initial Message", message, KEY_SIZE);
     add_round_key(expanded_key, message);
+    print_as_hex("After AddRoundKey (Round 0)", message, KEY_SIZE);
 
     for(int i = 1; i < 10; i++){
+        printf("\n--- Round %d ---  : [ 00  01  02  03  04  05  06  07  08  09  10  11  12  13  14  15 ]\n", i);
         sub_bytes(message, KEY_SIZE, s_box);
+        print_as_hex("After SubBytes   ", message, KEY_SIZE);
         shift_rows(message);
+        print_as_hex("After ShiftRows  ", message, KEY_SIZE);
         mix_columns(message, mix_matrix);
+        print_as_hex("After MixColumns ", message, KEY_SIZE);
         add_round_key(expanded_key + (i << 4), message);
+        print_as_hex("After AddRoundKey", message, KEY_SIZE);
     }
 
+    printf("\n--- Final Round (Round 10) ---\n");
     sub_bytes(message, KEY_SIZE, s_box);
+    print_as_hex("After SubBytes", message, KEY_SIZE);
     shift_rows(message);
+    print_as_hex("After ShiftRows", message, KEY_SIZE);
     add_round_key(expanded_key + (10 << 4), message);
+    print_as_hex("After AddRoundKey (Final)", message, KEY_SIZE);
 }
 
 
