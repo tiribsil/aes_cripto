@@ -12,12 +12,6 @@ make
 
 This will generate two executables: `encrypt` and `decrypt`.
 
-To clean up the compiled files, you can run:
-
-```bash
-make clean
-```
-
 ## Usage
 
 ### Encryption
@@ -57,14 +51,14 @@ Here is an example of how to encrypt and decrypt a message:
 
 ```
 Encrypted message:
-String: [)???B?%?ޘ?j?%?]
+String: [)�P_W �@"���:]
 Hex: [29c3505f571420f6402299b31a02d73a]
 ```
 
 ### Decrypt
 
 ```bash
-./decrypt "Thats my Kung Fu" "$(printf '\x29\xc3\x50\x5f\x57\x14\x20\xf6\x40\x22\x99\xb3\x1a\x02\xd7\x3a')"
+./decrypt "Thats my Kung Fu" "29c3505f571420f6402299b31a02d73a"
 ```
 
 **Output:**
