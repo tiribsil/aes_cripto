@@ -163,37 +163,50 @@ void mix_columns(char* message, unsigned char matrix[MATRIX_ORDER][MATRIX_ORDER]
     }
 }
 
-word key_schedule_core(word previous_word, int room_i){
-    // se não for múltiplo de 4, apenas retorna a palavra anterior
-    if(room_i % 4) return previous_word;
+void word_array_xor(char* a, char* b, char* c){
+    for(int i = 0; i < 4; i++)
+        a[i] = b[i] ^ c[i];
+}
 
+void key_schedule_core(char* words, int word_i){
+    // se não for múltiplo de 4, a nova palavra é xor entre w[i - 1] e w[i - 4]
+    int byte_i = word_i << 2;
+    if(word_i % 4){
+        word_array_xor(&words[byte_i], &words[byte_i - 4], &words[byte_i - 16]);
+        print_as_hex("Simple", &words[byte_i], 4);
+        return;
+    }
+
+    print_as_hex("Before anything", &words[byte_i - 4], 4);
     // rotword: faz um shift pra esquerda
     // como o shift é em byte, tem que fazer << 3
-    word first_byte = previous_word >> (3 << 3);
-    word new_word = previous_word << (1 << 3);
-    new_word |= first_byte;
+    memcpy(&words[byte_i], &words[byte_i - 4 + 1], 3);
+    words[byte_i + 3] = words[byte_i - 4];
+
+    print_as_hex("After RotWord", &words[byte_i], 4);
 
     // substitui com a s-box
-    sub_bytes(&new_word, sizeof(new_word), s_box);
+    sub_bytes(&words[byte_i], 4, s_box);
+    print_as_hex("After SubWord", &words[byte_i], 4);
 
     // xor com rcon[i / 4]
-    new_word ^= rcon[room_i >> 2];
+    words[byte_i] ^= rcon[word_i >> 2];
+    print_as_hex("After RCon", &words[byte_i], 4);
 
-    return new_word;
+    word_array_xor(&words[byte_i], &words[byte_i], &words[byte_i - 16]);
 }
 
 char* key_schedule(char* key){
     // aloca espaço para 11 chaves de 16 bytes (128 bits), 44 palavras
-    word* words = malloc(11 * 16);
+    char* words = malloc(11 * 16);
     
     // a chave original ocupa as primeiras 4 palavras
     memcpy(words, key, 16);
 
     // pra cada uma das 40 palavras restantes, gera a nova palavra
-    for(int i = 4; i < 44; i++)
-        words[i] = words[i - 4] ^ key_schedule_core(words[i - 1], i);
+    for(int i = 4; i < 44; i++) key_schedule_core(words, i);
     
-    return (char*)words;
+    return words;
 }
 
 void encrypt(char* key, char* message){
